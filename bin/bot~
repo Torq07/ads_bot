@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'telegram/bot'
+require 'geocoder'
+require "geocoder/railtie"
+Geocoder::Railtie.insert
+require './lib/message_responder'
+require './lib/app_configurator'
+
+config = AppConfigurator.new
+config.configure
+
+token = config.get_token
+logger = config.get_logger
+botan_token = config.get_botan_token
+
+logger.debug 'Starting telegram bot'
+
+Telegram::Bot::Client.run(token) do |bot|
+  bot.listen do |message|
+    options = {bot: bot, message: message}
+  	if message.respond_to?(:text) 
+			content=message.text
+		elsif message.respond_to?(:query)  
+			content=message.query
+		else	
+			content=message.data
+		end	
+		
+    logger.debug "@#{message.from.username}: #{content}" 
+    MessageResponder.new(options).respond
+  end
+end
