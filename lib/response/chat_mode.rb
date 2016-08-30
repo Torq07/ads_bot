@@ -8,16 +8,19 @@ class ChatMode
 	attr_reader :message
   attr_reader :bot
   attr_reader :user
+  attr_reader :answers
 
   def initialize(options)
     @bot = options[:bot]
     @message = options[:message]
     @user = options[:user]
     @@ad||=nil
+		@answers=["Show more","Search again",
+						 "Show contact","Show picture",
+						 "Latest ads","Sell something"]
   end
 
   def response
-
 	  if message.reply_to_message
 	  	manage_replies
 	  elsif	message.text
@@ -31,27 +34,32 @@ class ChatMode
 	  elsif message.contact	
 	  	manage_contacts
 	  end
-
 	end
 
 	def manage_replies
 		case message.reply_to_message.text
-		when 'Please enter ad message.Max 140 chars'
+		when  'Please enter your ad text. Be sure to include a good description as well as a price. There is a 140 character limit. When you\'re done, press send and you can add a photo in the next step.'
 			initialize_ad
-		when 'Please enter ID'
+		when "Please enter ID"
 			show_picture if message.text[/\d+/i]
-		end	
+		when 'Please enter  ID'
+			show_contact if message.text[/\d+/i]
+		when 'Please enter what are you searching?'
+			search_item(message.text) if message.text
+		end	 
 	end
 
 	def manage_direct_messages
-		case message.text
+		case message.text 
     when '/start'
       answer_with_greeting_message
     when '/stop'
       answer_with_farewell_message
-    when /contacts?/i
-    	get_contacts  
-    when /\Asell/i
+		when 'Search again'
+			request_searching_item
+    when /contact/i
+    	request_id('  ')  
+    when /\Asell/i 
     	add_ads	
     when /\Ano/i
     	save_ad
@@ -62,22 +70,21 @@ class ChatMode
     when /more/i
 			get_next_results
 		when /show picture/i
-			request_picture_id		
+			request_id(' ')
 		when /latest ads/i
 			get_latest_ads	
-    else
+		else
     	not_valid_request("Wrong command")
     end
 	end
 
 	def get_next_results
-		text=user.results
-						 .shift(3)
+		text=user.results   
+						 .shift(3) 
 						 .map{ |res| "*ID:* _#{res[0]}_\n #{res[1]}"}
 						 .join("\n\n")
-		answers=["More","Show picture"]
-		text,answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Latest Ads"] if text.length<2
-		MessageSender.new(bot: bot, chat: message.from, answers: answers, text: text).send
+		text,@answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Search again","Latest Ads","Sell something"] if text.length<2
+		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
 		user.save
 	end	
 
@@ -89,9 +96,14 @@ class ChatMode
 		user.update_attribute(:results,results)
 		get_next_results
 	end
+	
+	def request_searching_item
+		text="Please enter what are you searching?"
+		MessageSender.new(bot: bot, chat: message.from, text: text, force_reply:true).send
+	end
 
-	def request_picture_id
-		text="Please enter ID"
+	def request_id(param)
+		text="Please enter#{param}ID"
 		MessageSender.new(bot: bot, chat: message.from, text: text, force_reply:true).send
 	end
 
@@ -110,10 +122,10 @@ class ChatMode
 											answers: 
 												[
 												 Telegram::Bot::Types::InlineKeyboardButton.new(
-													text:"Request seller contact \u1F4F1", 
+													text:"Seller contact", 
 													callback_data:required_ad.user_id),
 												 Telegram::Bot::Types::InlineKeyboardButton.new(
-													text:'Show more search results', 
+													text:'Show more', 
 													callback_data:"Show more search result")
 												],
 											inline: true)
@@ -138,6 +150,12 @@ class ChatMode
 		rescue 
 			not_valid_request("There is no AD with this ID")	
 	end
+	
+	def show_contact
+		requested_user=Ad.find(message.text[/\d+/]).user
+		text="#{requested_user.fname} #{requested_user.lname}\n#{requested_user.phone}"
+		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
+	end	
 
 	def search_item(searching_item)
 		request=searching_item.strip
@@ -167,6 +185,9 @@ class ChatMode
   	user.save
 		text="Your location is saved, thank you. Gain is an powerful local ads bot to discover an sell great products around you. \n\nUse Gain with the following simple commands:\n\ntype 'search' to search\n\ntype 'sell' and wait for the prompt to sell.\n\nYou can also navigate using the buttons at the bottom of the screen.\n\nBy using Gain you agree to our terms & conditions: www.gain.im/terms.html"
   	MessageSender.new(bot: bot, chat: message.from, text: text).send
+		@answers=['Show more','Sell something']
+		puts 'works'
+		get_latest_ads
 	end	
 	  
 	def manage_contacts
@@ -206,7 +227,8 @@ class ChatMode
 		if check_ad
 			@@ad.save
 			text = "Thank you, your ad is now saved. It's ID is: #{@@ad.id}"
-		  MessageSender.new(bot: bot, chat: message.from, text: text).send 
+			@answers=["Sell something","Latest ads","Frequently asked questions"]
+		  MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send 
 		end	  
 		rescue LongMessage
 			text = 'This is not valid AD. Length is bigger than 140 characters'
