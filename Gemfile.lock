@@ -1,17 +1,17 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (4.2.5)
-      activesupport (= 4.2.5)
+    activemodel (4.2.7.1)
+      activesupport (= 4.2.7.1)
       builder (~> 3.1)
-    activerecord (4.2.5)
-      activemodel (= 4.2.5)
-      activesupport (= 4.2.5)
+    activerecord (4.2.7.1)
+      activemodel (= 4.2.7.1)
+      activesupport (= 4.2.7.1)
       arel (~> 6.0)
     activerecord-postgis-adapter (3.1.4)
       activerecord (~> 4.2)
       rgeo-activerecord (>= 4.0.4)
-    activesupport (4.2.5)
+    activesupport (4.2.7.1)
       i18n (~> 0.7)
       json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
@@ -36,14 +36,13 @@ GEM
       httparty (>= 0.7.3)
       mimemagic
       multipart-post
-    httparty (0.13.7)
-      json (~> 1.8)
+    httparty (0.14.0)
       multi_xml (>= 0.5.2)
     i18n (0.7.0)
-    ice_nine (0.11.1)
+    ice_nine (0.11.2)
     json (1.8.3)
-    mimemagic (0.3.0)
-    minitest (5.8.3)
+    mimemagic (0.3.2)
+    minitest (5.9.0)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
     persistent_http (1.0.6)
@@ -82,4 +81,4 @@ DEPENDENCIES
   telegram-bot-ruby (~> 0.2.6)
 
 BUNDLED WITH
-   1.11.2
+   1.12.5

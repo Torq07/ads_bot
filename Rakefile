@@ -32,4 +32,5 @@ namespace :db do
     ActiveRecord::Base.establish_connection(admin_connection)
     ActiveRecord::Base.connection.drop_database(connection_details.fetch('database'))
   end
+
 end

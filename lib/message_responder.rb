@@ -29,4 +29,5 @@ class MessageResponder
         ChatMode.new(message: message ,bot: bot, user: user).response
     end    
   end
+
 end

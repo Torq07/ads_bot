@@ -38,7 +38,7 @@ class ChatMode
 		case message.reply_to_message.text
 		when 'Please enter ad message.Max 140 chars'
 			initialize_ad
-		when 'Please enter AD-ID'
+		when 'Please enter ID'
 			show_picture if message.text[/\d+/i]
 		end	
 	end
@@ -73,10 +73,10 @@ class ChatMode
 	def get_next_results
 		text=user.results
 						 .shift(3)
-						 .map{ |res| "*AD-ID:* _#{res[0]}_\n*AD-BODY:* _#{res[1]}_"}
+						 .map{ |res| "*ID:* _#{res[0]}_\n #{res[1]}"}
 						 .join("\n\n")
 		answers=["More","Show picture"]
-		text,answers="Sorry there is no more results",["Latest Ads"] if text.length<2
+		text,answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Latest Ads"] if text.length<2
 		MessageSender.new(bot: bot, chat: message.from, answers: answers, text: text).send
 		user.save
 	end	
@@ -91,7 +91,7 @@ class ChatMode
 	end
 
 	def request_picture_id
-		text="Please enter AD-ID"
+		text="Please enter ID"
 		MessageSender.new(bot: bot, chat: message.from, text: text, force_reply:true).send
 	end
 
@@ -165,7 +165,7 @@ class ChatMode
 		user.longitude=message.location.longitude
   	user.latitude=message.location.latitude
   	user.save
-		text='Thank you, your location saved. Here are available command'
+		text="Your location is saved, thank you. Gain is an powerful local ads bot to discover an sell great products around you. \n\nUse Gain with the following simple commands:\n\ntype 'search' to search\n\ntype 'sell' and wait for the prompt to sell.\n\nYou can also navigate using the buttons at the bottom of the screen.\n\nBy using Gain you agree to our terms & conditions: www.gain.im/terms.html"
   	MessageSender.new(bot: bot, chat: message.from, text: text).send
 	end	
 	  
@@ -177,7 +177,7 @@ class ChatMode
 	end
     
 	def add_ads
-		text='Please enter ad message.Max 140 chars'
+		text='Please enter your ad text. Be sure to include a good description as well as a price. There is a 140 character limit. When you\'re done, press send and you can add a photo in the next step.'
   	MessageSender.new(bot: bot, chat: message.from, text: text, force_reply: true).send
 	end
 
@@ -205,7 +205,7 @@ class ChatMode
 	def save_ad  
 		if check_ad
 			@@ad.save
-			text = "Thank you your ads is saved. AD-ID :#{@@ad.id}"
+			text = "Thank you, your ad is now saved. It's ID is: #{@@ad.id}"
 		  MessageSender.new(bot: bot, chat: message.from, text: text).send 
 		end	  
 		rescue LongMessage

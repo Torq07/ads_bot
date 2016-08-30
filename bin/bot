@@ -15,7 +15,6 @@ logger.debug 'Starting telegram bot'
 
 Telegram::Bot::Client.run(token) do |bot|
   bot.listen do |message|
-  	p message
     options = {bot: bot, message: message}
   	if message.respond_to?(:text) 
 			content=message.text
