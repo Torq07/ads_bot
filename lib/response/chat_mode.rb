@@ -114,7 +114,7 @@ class ChatMode
 
 	def show_picture
 		message.text
-		required_ad=Ad.find(message.text.to_i) 
+		required_ad=Ad.find(message.text.to_i)
 		if required_ad.picture
 			MessageSender.new(bot: bot, 
 											chat: message.from, 
@@ -148,13 +148,16 @@ class ChatMode
 												.send	
 		end									
 		rescue 
-			not_valid_request("There is no AD with this ID")	
-	end
+			 not_valid_request("There is no AD with this ID")	
+	end 
 	
 	def show_contact
-		requested_user=Ad.find(message.text[/\d+/]).user
+		requested_user=Ad.find(message.text[/\d+/]).user if Ad.
 		text="#{requested_user.fname} #{requested_user.lname}\n#{requested_user.phone}"
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
+		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send	
+		rescue 
+			not_valid_request("There is no AD with this ID")	
+
 	end	
 
 	def search_item(searching_item)
