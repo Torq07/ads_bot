@@ -1,8 +1,8 @@
 require './models/user'
 require './lib/message_sender'
-require './lib/response/callback_mode.rb'
-require './lib/response/inline_mode.rb'
-require './lib/response/chat_mode.rb'
+require_relative 'response_mode/callback_mode'
+require_relative 'response_mode/inline_mode'
+require_relative '/response_mode/chat_mode'
 
 class MessageResponder
   

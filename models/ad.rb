@@ -1,5 +1,4 @@
 require 'active_record'
-require './lib/message_sender'
 require 'geocoder'
 require "geocoder/railtie"
 Geocoder::Railtie.insert
@@ -7,6 +6,7 @@ Geocoder::Railtie.insert
 class LongMessage < StandardError ; end
 
 class Ad < ActiveRecord::Base
+	
 	belongs_to :user
 	before_create :set_expiration_date , :check_length
 	# attr_accessor :latitude, :longitude
