@@ -1,7 +1,5 @@
 require './lib/message_sender'
-require './models/ad'
-require './models/creator'
-require './models/marketplace'
+Dir['./models/*'].each {|file| require file} 
 
 class NoAd < StandardError ; end
 
@@ -217,7 +215,7 @@ class ChatMode
 	end
 
 	def initialize_ad
-		@@ad=user.ad.new(message:message.text, address:user.address)
+		@@ad=user.ads.new(message:message.text, address:user.address)
 		if user.phone
 			add_picture_to_ad
 		else	
