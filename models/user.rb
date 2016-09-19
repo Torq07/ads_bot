@@ -16,7 +16,7 @@ class User < ActiveRecord::Base
 	after_create :relative_creator
 	
 	def relative_creator
-		Creator.create(user_id: self.id, address: self.address , latitude: latitude, longitude: longitude)
+		Creator.create(user_id: self.id)
 	end
 
 end
