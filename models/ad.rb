@@ -8,6 +8,7 @@ class LongMessage < StandardError ; end
 class Ad < ActiveRecord::Base
 	
 	belongs_to :user
+	belongs_to :marketplace
 	before_create :set_expiration_date , :check_length
 	# attr_accessor :latitude, :longitude
 	geocoded_by :address   # can also be an IP address

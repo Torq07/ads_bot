@@ -1,5 +1,7 @@
 require './lib/message_sender'
 require './models/ad'
+require './models/creator'
+require './models/marketplace'
 
 class NoAd < StandardError ; end
 
@@ -72,10 +74,18 @@ class ChatMode
 		when /show picture/i
 			request_id(' ')
 		when /latest ads/i
-			get_latest_ads	
+			get_latest_ads
+		when /new/
+			test_functions	
 		else
     	not_valid_request("Wrong command")
     end
+	end
+
+	def test_functions
+		p user
+		mp=user.creator.marketplaces.new
+		mp.save
 	end
 
 	def get_next_results
@@ -179,6 +189,7 @@ class ChatMode
   end
 
   def manage_documents
+
     FileUploader.new(bot:bot).load(message.document.file_id,message.document.file_name)
   end
   
