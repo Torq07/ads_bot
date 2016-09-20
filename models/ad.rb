@@ -22,5 +22,4 @@ class Ad < ActiveRecord::Base
 		raise LongMessage.new if self.message.length>140	
 	end
 
-
 end

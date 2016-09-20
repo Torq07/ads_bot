@@ -6,23 +6,20 @@ module AdsCreator
 		if user.phone
 			request('Would you like to add picture to ad?',answers: ['yes','no'])
 		else	
-			text = 'Please provide your contact'
-			button_text='Send contact'
-		  MessageSender.new(bot: bot, chat: message.from, text: text, contact_request:button_text).send 
+			request('Please provide your contact', contact_request:'Send contact' )
 		end  
 
 	end
 
 	def save_ad  
 
-		@ad.save
-		text = "Thank you, your ad is now saved. It's ID is: #{@ad.id}"
-		@answers=["Sell something","Latest ads","Frequently asked questions"]
-	  MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send 
-		rescue LongMessage
-			text = 'This is not valid AD. Length is bigger than 140 characters'
-		  MessageSender.new(bot: bot, chat: message.from, text: text).send if message.to_s.length >140
+		request("Thank you, your ad is now saved. It's ID is: #{@ad.id}",
+						answers:["Sell something","Latest ads","Frequently asked questions"])
 
+		rescue LongMessage
+			if message.to_s.length >140
+				request('This is not valid AD. Length is bigger than 140 characters') 
+			end	
 	end
 
 	def check_ad_for_photo
@@ -30,8 +27,7 @@ module AdsCreator
 		raise NoAd.new unless @ad && @ad.picture.nil?
 		true
 		rescue NoAd
-			text = 'Sorry you don\'t create any ad for picture'
-		  MessageSender.new(bot: bot, chat: message.from, text: text).send 
+			request('Sorry you don\'t create any ad for picture')
 		  return false
 
 	end

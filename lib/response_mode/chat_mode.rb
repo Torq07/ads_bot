@@ -66,8 +66,9 @@ class ChatMode
 	def manage_direct_messages
 		case message.text 
     when '/start'
-      answer_with_greeting_message
+    	request(I18n.t('greeting_message'),location_request: 'Send location')
     when '/stop'
+    	request(I18n.t('farewell_message'))
       answer_with_farewell_message
 		when 'Search again'
 			request("Please enter what are you searching?", force_reply:true)

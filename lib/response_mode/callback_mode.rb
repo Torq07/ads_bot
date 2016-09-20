@@ -1,8 +1,11 @@
 require './lib/message_sender'
 require './models/user'
+require './lib/requests_handler'
 
 class CallbackMode
 	
+	include RequestsHandler
+
 	attr_reader :message
   attr_reader :bot
   attr_reader :user
@@ -45,16 +48,18 @@ class CallbackMode
 	end	
 
 	def agreament(desicion)
+		
+		marketplace=user.creator.marketplaces.find_by(agreament: nil)
 
-		text=if desicion == 'true' 
-			user.creator.marketplaces.find_by(agreament: nil).update_attribute(:agreament, true)
+		text=if marketplace && desicion == 'true' 
+			marketplace.update_attribute(:agreament, true)
 			"Thank you, your marketplace is created"
-		else
-			user.creator.marketplaces.find_by(agreament: nil)
+		elsif marketplace 
+			marketplace.destroy 
 			"Your marketplace cannot be created if you do not agree with our terms, your request has been cancelled"
 		end
-			
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
+
+		request(text, answers: @answers)	
 
 	end
 	

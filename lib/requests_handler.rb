@@ -6,32 +6,17 @@ module RequestsHandler
 											chat: message.from, 
 											text: text, 
 											force_reply: opts[:force_reply], 
-											answers: opts[:answers] ).send
+											answers: opts[:answers],
+											contact_request:opts[:contact_request],
+											location_request: opts[:location_request]).send if text
 
 	end
 	
 	def not_valid_request(text="")
-
-		text="This is not valid request. #{text}"
-		MessageSender.new(bot: bot, chat: message.from, text: text).send
-
-	end
-
-	def answer_with_greeting_message
-
-	  text = I18n.t('greeting_message')
-	  button_text='Send Location'
-	  MessageSender.new(bot: bot, chat: message.from, text: text, location_request: button_text).send
+	
+		request("This is not valid request. #{text}")
 
 	end
-
-	def answer_with_farewell_message
-
-	  text = I18n.t('farewell_message')
-	  MessageSender.new(bot: bot, chat: message.from, text: text).send
-
-	end
-
 
 	def agreament_request
 
@@ -60,7 +45,7 @@ module RequestsHandler
 						 .map{ |res| "*ID:* _#{res[0]}_\n #{res[1]}"}
 						 .join("\n\n")
 		text,@answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Search again","Latest Ads","Sell something"] if text.length<2
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
+		request(text,answers: @answers)
 		user.save
 
 	end	
