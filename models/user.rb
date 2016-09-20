@@ -19,4 +19,10 @@ class User < ActiveRecord::Base
 		Creator.create(user_id: self.id)
 	end
 
+	def contacts
+
+		"#{self.fname} #{self.lname}\n#{self.phone}"		
+
+	end
+
 end

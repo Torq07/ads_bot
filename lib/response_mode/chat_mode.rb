@@ -1,20 +1,28 @@
 require './lib/message_sender'
+require './lib/marketplace_creator'
+require './lib/requests_handler'
+require './lib/data_manager'
+require './lib/ads_creator'
 Dir['./models/*'].each {|file| require file} 
 
 class NoAd < StandardError ; end
 
 class ChatMode
 
-	attr_reader :message
-  attr_reader :bot
-  attr_reader :user
-  attr_reader :answers
+	include MarketplaceCreator
+	include RequestsHandler
+	include DataManager
+	include AdsCreator
+
+	attr_reader :message, :bot, :user, :answers
+	attr_accessor :ad
 
   def initialize(options)
     @bot = options[:bot]
     @message = options[:message]
     @user = options[:user]
-    @@ad||=nil
+    @ad=user.ads.last || nil
+    @marketplace=user.creator.marketplaces.last || nil 
 		@answers=["Show more","Search again",
 						 "Show contact","Show picture",
 						 "Latest ads","Sell something"]
@@ -32,7 +40,6 @@ class ChatMode
 	  elsif message.location
 	  	manage_locations
 	  elsif message.contact	
-	  	p message
 	  	manage_contacts
 	  end
 	end
@@ -47,6 +54,12 @@ class ChatMode
 			show_contact if message.text[/\d+/i]
 		when 'Please enter what are you searching?'
 			search_item(message.text) if message.text
+		when 'Now give your marketplace a name'
+			save_marketplace_name
+		when 'And a short description – where are you? What will you sell? Why should people use your marketplace?'
+			save_marketplace_description
+		when 'Enter passphrase which will be your password to this marketplace analytics'
+			save_marketplace_pass	
 		end	 
 	end
 
@@ -57,213 +70,28 @@ class ChatMode
     when '/stop'
       answer_with_farewell_message
 		when 'Search again'
-			request_searching_item
+			request("Please enter what are you searching?", force_reply:true)
     when /contact/i
-    	request_id('  ')  
+    	request("Please enter\s\sID", force_reply:true)  
     when /\Asell/i 
-    	add_ads	
+    	request('Please enter your ad text. Be sure to include a good description as well as a price. There is a 140 character limit. When you\'re done, press send and you can add a photo in the next step.',force_reply:true)
     when /\Ano/i
     	save_ad
     when /\byes\b/i
-    	request_picture	
+    	request('Please upload picture for this ad')
     when /\Asearch(.*)/i
     	search_item($1)
     when /more/i
 			get_next_results
 		when /show picture/i
-			request_id(' ')
+			request("Please enter\sID",force_reply:true)
 		when /latest ads/i
 			get_latest_ads
-		when /new/
-			creat_marketplace
+		when /\/new/
+			create_marketplace
 		else
     	not_valid_request("Wrong command")
     end
-	end
-
-	def create_marketplace
-		user.creator.marketplaces.new
-	end
-
-	def get_next_results
-		text=user.results   
-						 .shift(3) 
-						 .map{ |res| "*ID:* _#{res[0]}_\n #{res[1]}"}
-						 .join("\n\n")
-		text,@answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Search again","Latest Ads","Sell something"] if text.length<2
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
-		user.save
-	end	
-
-	def get_latest_ads
-		results=Ad.near( user.address, 50, :units => :km )
-							.last(30)
-							.to_a
-							.map{ |res| [res.id,res.message] }
-		user.update_attribute(:results,results)
-		get_next_results
-	end
-	
-	def request_searching_item
-		text="Please enter what are you searching?"
-		MessageSender.new(bot: bot, chat: message.from, text: text, force_reply:true).send
-	end
-
-	def request_id(param)
-		text="Please enter#{param}ID"
-		MessageSender.new(bot: bot, chat: message.from, text: text, force_reply:true).send
-	end
-
-	def not_valid_request(text="")
-		text="This is not valid request. #{text}"
-		MessageSender.new(bot: bot, chat: message.from, text: text).send
-	end
-
-	def show_picture
-		message.text
-		required_ad=Ad.find(message.text.to_i)
-		if required_ad.picture
-			MessageSender.new(bot: bot, 
-											chat: message.from, 
-											photo:required_ad.picture, 
-											answers: 
-												[
-												 Telegram::Bot::Types::InlineKeyboardButton.new(
-													text:"Seller contact", 
-													callback_data:required_ad.user_id),
-												 Telegram::Bot::Types::InlineKeyboardButton.new(
-													text:'Show more', 
-													callback_data:"Show more search result")
-												],
-											inline: true)
-											.send_photo
-		else
-			text="There is no image for this ad"
-			MessageSender.new(bot: bot,
-												chat: message.from, 
-												text: text,
-												answers: 
-													[
-													 Telegram::Bot::Types::InlineKeyboardButton.new(
-														text:"Request seller contact \u1F4F1", 
-														callback_data:required_ad.user_id),
-													 Telegram::Bot::Types::InlineKeyboardButton.new(
-														text:'Show more search results', 
-														callback_data:"Show more search results")
-													], 
-												inline: true)
-												.send	
-		end									
-		rescue 
-			 not_valid_request("There is no AD with this ID")	
-	end 
-	
-	def show_contact
-		requested_user=Ad.find(message.text[/\d+/]).user if Ad.
-		text="#{requested_user.fname} #{requested_user.lname}\n#{requested_user.phone}"
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send	
-		rescue 
-			not_valid_request("There is no AD with this ID")	
-
-	end	
-
-	def search_item(searching_item)
-		request=searching_item.strip
-		t=Ad.arel_table
-		results=Ad.where( t[:message].matches("%#{request}%") )
-							.near( user.address, 20, :units => :km )
-							.to_a
-							.map{ |res| [res.id,res.message] }
-		user.update_attribute(:results,results)
-		get_next_results
-	end
-
-	def manage_photos
-		if check_ad
-			@@ad.picture=message.photo.last.file_id
-			save_ad
-		end	
-  end
-
-  def manage_documents
-
-    FileUploader.new(bot:bot).load(message.document.file_id,message.document.file_name)
-  end
-  
-	def manage_locations
-		user.longitude=message.location.longitude
-  	user.latitude=message.location.latitude
-  	user.save
-		text="Your location is saved, thank you. Gain is an powerful local ads bot to discover an sell great products around you. \n\nUse Gain with the following simple commands:\n\ntype 'search' to search\n\ntype 'sell' and wait for the prompt to sell.\n\nYou can also navigate using the buttons at the bottom of the screen.\n\nBy using Gain you agree to our terms & conditions: www.gain.im/terms.html"
-  	MessageSender.new(bot: bot, chat: message.from, text: text).send
-		@answers=['Show more','Sell something']
-		get_latest_ads
-	end	
-	  
-	def manage_contacts
-		user.update_attributes(phone: message.contact.phone_number,
-													 fname: message.contact.first_name,
-													 lname: message.contact.last_name)
-		add_picture_to_ad
-	end
-    
-	def add_ads
-		text='Please enter your ad text. Be sure to include a good description as well as a price. There is a 140 character limit. When you\'re done, press send and you can add a photo in the next step.'
-  	MessageSender.new(bot: bot, chat: message.from, text: text, force_reply: true).send
-	end
-
-	def initialize_ad
-		@@ad=user.ads.new(message:message.text, address:user.address)
-		if user.phone
-			add_picture_to_ad
-		else	
-			text = 'Please provide your contact'
-			button_text='Send contact'
-		  MessageSender.new(bot: bot, chat: message.from, text: text, contact_request:button_text).send 
-		end  
-	end
-
-	def add_picture_to_ad
-		text = 'Would you like to add picture to ad?'
-	  MessageSender.new(bot: bot, chat: message.from, text: text, answers: ['yes','no']).send 
-	end
-
-	def request_picture
-		text = 'Please upload picture for this ad'
-	  MessageSender.new(bot: bot, chat: message.from, text: text).send 
-	end
-	
-	def save_ad  
-		if check_ad
-			@@ad.save
-			text = "Thank you, your ad is now saved. It's ID is: #{@@ad.id}"
-			@answers=["Sell something","Latest ads","Frequently asked questions"]
-		  MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send 
-		end	  
-		rescue LongMessage
-			text = 'This is not valid AD. Length is bigger than 140 characters'
-		  MessageSender.new(bot: bot, chat: message.from, text: text).send if message.to_s.length >140
-	end
-		
-	def answer_with_greeting_message
-	  text = I18n.t('greeting_message')
-	  button_text='Send Location'
-	  MessageSender.new(bot: bot, chat: message.from, text: text, location_request: button_text).send
-	end
-
-	def answer_with_farewell_message
-	  text = I18n.t('farewell_message')
-
-	  MessageSender.new(bot: bot, chat: message.from, text: text).send
-	end
-
-	def check_ad
-		raise NoAd.new if @@ad.nil?
-		true
-		rescue NoAd
-			text = 'Sorry you don\'t create any ad for picture'
-		  MessageSender.new(bot: bot, chat: message.from, text: text).send 
-		  return false
 	end
 
 end	

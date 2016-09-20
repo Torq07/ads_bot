@@ -13,7 +13,7 @@ class CreateMarketplacesAndCreatorsAndModifyUsersAndAds < ActiveRecord::Migratio
       t.string :address
       t.float :latitude
       t.float :longitude
-      t.text :results, array: true, default: []
+      t.boolean :agreament
     end
 
     reversible do |dir|
