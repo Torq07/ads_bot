@@ -88,8 +88,10 @@ class ChatMode
 			request("Please enter\sID",force_reply:true)
 		when /latest ads/i
 			get_latest_ads
-		when /\/new/
+		when /\/new/i
 			create_marketplace
+		when /\/admin/i
+			check_for_marketplaces	
 		else
     	not_valid_request("Wrong command")
     end

@@ -1,3 +1,4 @@
+config/secret.yml
 GEM
   remote: https://rubygems.org/
   specs:

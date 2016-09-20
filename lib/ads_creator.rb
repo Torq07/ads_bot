@@ -12,7 +12,7 @@ module AdsCreator
 	end
 
 	def save_ad  
-
+		@ad.save
 		request("Thank you, your ad is now saved. It's ID is: #{@ad.id}",
 						answers:["Sell something","Latest ads","Frequently asked questions"])
 

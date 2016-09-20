@@ -20,4 +20,9 @@ module MarketplaceCreator
 		agreament_request
 	end
 
+	def check_for_marketplaces
+		marketplaces=user.creator.marketplaces.all
+		# request('Whi')
+	end
+
 end

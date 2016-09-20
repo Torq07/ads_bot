@@ -1,41 +1,46 @@
 module RequestsHandler
 	
-	def request(text,opts={})
+	def request(text='',opts={})
 
-		MessageSender.new(bot: bot, 
+		opts[:answers]=agregate_inline_answers(opts[:answers]) if opts[:inline]
+
+		command,content = if opts[:photo] 
+			 ['send_photo', "photo: \"#{opts[:photo]}\""]
+			else
+			 ['send', "text: \"#{text}\""]
+		end	
+		 
+		send_code=%Q{ MessageSender.new(bot: bot, 
 											chat: message.from, 
-											text: text, 
+											#{content}, 
 											force_reply: opts[:force_reply], 
 											answers: opts[:answers],
-											contact_request:opts[:contact_request],
-											location_request: opts[:location_request]).send if text
+											inline: opts[:inline],
+											contact_request: opts[:contact_request],
+											location_request: opts[:location_request]).#{command} if text}
+		eval send_code										
 
 	end
 	
-	def not_valid_request(text="")
-	
-		request("This is not valid request. #{text}")
+	def agregate_inline_answers(answers)
+		answers.map do |answer|
+			Telegram::Bot::Types::InlineKeyboardButton.new(answer)
+		end	
+	end
 
+	def not_valid_request(text="")
+		request("This is not valid request. #{text}")
 	end
 
 	def agreament_request
-
-		text="In order to finish, please read the Terms & Conditions for the Gain Marketplace Bot [www.gain.im/terms](http://www.gain.im/terms) and press agree."
+		text="In order to finish, please read the Terms & Conditions\
+ for the Gain Marketplace Bot\
+ [www.gain.im/terms](http://www.gain.im/terms) and press agree."
 		answers=[
-			Telegram::Bot::Types::InlineKeyboardButton.new(
-				text:"Agree", 
-				callback_data: 'agreament_true'),
-			Telegram::Bot::Types::InlineKeyboardButton.new(
-				text:'Disagree', 
-				callback_data: 'agreament_false')
-						]
-		MessageSender.new(bot: bot, 
-											chat: message.from,
-											text: text, 
-											answers: answers, 
-											inline: true
-											).send
-
+						{text:"Agree", callback_data: 'agreament_true'},
+	 					{text:'Disagree', callback_data: 'agreament_false'}
+	 					]
+		request(text, answers: answers, inline: true)
 	end
 
 	def get_next_results
@@ -44,7 +49,13 @@ module RequestsHandler
 						 .shift(3) 
 						 .map{ |res| "*ID:* _#{res[0]}_\n #{res[1]}"}
 						 .join("\n\n")
-		text,@answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Search again","Latest Ads","Sell something"] if text.length<2
+	  if text.length<2
+			text = "There are no ads which match your search.\
+ Type 'search' to search again or press the\
+ 'latest ads' button. Have something to sell?\
+ Press the 'sell something' button to add it."
+			@answers = ["Search again","Latest Ads","Sell something"] 
+		end	
 		request(text,answers: @answers)
 		user.save
 
@@ -73,42 +84,25 @@ module RequestsHandler
 	end	
 
 	def show_picture
-
 		required_ad=Ad.find(message.text.to_i)
 		if required_ad.picture
-			MessageSender.new(bot: bot, 
-											chat: message.from, 
-											photo:required_ad.picture, 
-											answers: 
-												[
-												 Telegram::Bot::Types::InlineKeyboardButton.new(
-													text:"Seller contact", 
-													callback_data:required_ad.user_id),
-												 Telegram::Bot::Types::InlineKeyboardButton.new(
-													text:'Show more', 
-													callback_data:"Show more search result")
-												],
-											inline: true)
-											.send_photo
+			answers=[
+				{text: "Seller contact", callback_data: required_ad.user_id},
+				{text: 'Show more', callback_data: "Show more search result" }
+							]
+			request('',inline: true, 
+								 photo: required_ad.picture,
+								 answers: answers )
 		else
 			text="There is no image for this ad"
-			MessageSender.new(bot: bot,
-												chat: message.from, 
-												text: text,
-												answers: 
-													[
-													 Telegram::Bot::Types::InlineKeyboardButton.new(
-														text:"Request seller contact \u1F4F1", 
-														callback_data:required_ad.user_id),
-													 Telegram::Bot::Types::InlineKeyboardButton.new(
-														text:'Show more search results', 
-														callback_data:"Show more search results")
-													], 
-												inline: true)
-												.send	
+			answers=[
+				{text:"Request seller contact",callback_data: required_ad.user_id.to_s },
+				{text:'Show more search results',callback_data:"Show more search results"}
+							]
+			request(text, answers:answers, inline: true)
 		end									
-		rescue 
-		  not_valid_request("There is no AD with this ID")	
+		# rescue 
+		#   not_valid_request("There is no AD with this ID")	
 
 	end 
 
