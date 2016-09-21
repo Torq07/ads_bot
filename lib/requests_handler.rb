@@ -2,8 +2,10 @@ module RequestsHandler
 	
 	def request(text='',opts={})
 
-		opts[:answers]=agregate_inline_answers(opts[:answers]) if opts[:inline]
-
+		if opts[:inline]
+			opts[:answers]=agregate_inline_answers(opts[:answers]) 
+		end
+			
 		command,content = if opts[:photo] 
 			 ['send_photo', "photo: \"#{opts[:photo]}\""]
 			else
@@ -11,13 +13,13 @@ module RequestsHandler
 		end	
 		 
 		send_code=%Q{ MessageSender.new(bot: bot, 
-											chat: message.from, 
-											#{content}, 
-											force_reply: opts[:force_reply], 
-											answers: opts[:answers],
-											inline: opts[:inline],
-											contact_request: opts[:contact_request],
-											location_request: opts[:location_request]).#{command} if text}
+			chat: message.from, 
+			#{content}, 
+			force_reply: opts[:force_reply], 
+			answers: opts[:answers],
+			inline: opts[:inline],
+			contact_request: opts[:contact_request],
+			location_request: opts[:location_request]).#{command} if text}
 		eval send_code										
 
 	end
@@ -76,8 +78,14 @@ module RequestsHandler
 
 	def show_contact
 
-		text=Ad.includes(:user).find(message.text[/\d+/].to_i).user.contacts
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send	
+		text=Ad.includes(:user)
+			.find(message.text[/\d+/].to_i)
+			.user
+			.contacts
+		MessageSender.new(bot: bot,
+			chat: message.from,
+			answers: @answers, 
+			text: text).send	
 		rescue 
 			not_valid_request("There is no AD with this ID")	
 
@@ -87,8 +95,10 @@ module RequestsHandler
 		required_ad=Ad.find(message.text.to_i)
 		if required_ad.picture
 			answers=[
-				{text: "Seller contact", callback_data: required_ad.user_id},
-				{text: 'Show more', callback_data: "Show more search result" }
+				{text: "Seller contact",
+				 callback_data: required_ad.user_id},
+				{text: 'Show more',
+				 callback_data: "Show more search result" }
 							]
 			request('',inline: true, 
 								 photo: required_ad.picture,
@@ -96,13 +106,15 @@ module RequestsHandler
 		else
 			text="There is no image for this ad"
 			answers=[
-				{text:"Request seller contact",callback_data: required_ad.user_id.to_s },
-				{text:'Show more search results',callback_data:"Show more search results"}
+				{text:"Request seller contact",
+				 callback_data: required_ad.user_id.to_s },
+				{text:'Show more search results',
+				 callback_data:"Show more search results"}
 							]
 			request(text, answers:answers, inline: true)
 		end									
-		# rescue 
-		#   not_valid_request("There is no AD with this ID")	
+		rescue 
+		  not_valid_request("There is no AD with this ID")	
 
 	end 
 
@@ -110,13 +122,22 @@ module RequestsHandler
 		
 		t=Ad.arel_table
 		obj = user.marketplace ? user.marketplace.ads : Ad
-
-		results=obj.where( t[:message].matches("%#{searching_item.strip}%") )
-							.near( user.address, 20, :units => :km )
-							.map{ |res| [res.id,res.message] }
+		pattern="%#{searching_item.strip}%"
+		results=obj.where( t[:message].matches( pattern ) )
+			.near( user.address, 20, :units => :km )
+			.map{ |res| [res.id,res.message] }
 		user.update_attribute(:results,results)
 		get_next_results
 		
+	end
+
+	def admin?
+		text=if user.current_admin_marketplace_id
+			"Currently administrating marketplace \##{user.current_admin_marketplace_id}"	
+		else
+			'Nope'
+		end	
+		request(text)		
 	end
 
 end 

@@ -18,13 +18,11 @@ class CallbackMode
 		@answers=["Show more","Search again",
 						 "Show contact","Show picture",
 						 "Latest ads","Sell something"]
-
-
   end
 	 
   def response
 	  case message.data
-	    when /(\d+)/i
+	    when /^(\d+)/i
         MessageSender.new(bot: bot, 
         									chat: message.from, 
         									answers:@answers, 
@@ -34,6 +32,10 @@ class CallbackMode
         get_next_results 
       when /agreament_(.*)/
       	agreament($1)
+      when /admin_(\d+)/
+      	user.update_attribute(:requested_marketplace_id, $1)
+      	request('Please enter passphrase for\
+ this marketplace',force_reply: true)	
 	  end
 	end 
 
@@ -42,8 +44,14 @@ class CallbackMode
 						 .shift(3)
 						 .map{ |res| "*ID:* _#{res[0]}_\n#{res[1]}"}
 						 .join("\n\n")
-		text,@answers="There are no ads which match your search. Type 'search' to search again or press the 'latest ads' button. Have something to sell? Press the 'sell something' button to add it.",["Search again","Latest Ads","Sell something"] if text.length<2
-		MessageSender.new(bot: bot, chat: message.from, answers: @answers, text: text).send
+		text,@answers="There are no ads which match your search.\
+Type 'search' to search again or press the 'latest ads' button.\
+Have something to sell? Press the 'sell something' button to add\
+it.",["Search again","Latest Ads","Sell something"] if text.length<2
+		MessageSender.new(bot: bot,
+										  chat: message.from,
+										  answers: @answers,
+										  text: text).send
 		user.save
 	end	
 
@@ -56,7 +64,8 @@ class CallbackMode
 			"Thank you, your marketplace is created"
 		elsif marketplace 
 			marketplace.destroy 
-			"Your marketplace cannot be created if you do not agree with our terms, your request has been cancelled"
+			"Your marketplace cannot be created if you do not agree\
+ with our terms, your request has been cancelled"
 		end
 
 		request(text, answers: @answers)	

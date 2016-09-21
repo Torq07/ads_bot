@@ -46,7 +46,7 @@ class ChatMode
 
 	def manage_replies
 		case message.reply_to_message.text
-		when  'Please enter your ad text. Be sure to include a good description as well as a price. There is a 140 character limit. When you\'re done, press send and you can add a photo in the next step.'
+		when  /Please enter your ad text/
 			initialize_ad
 		when "Please enter ID"
 			show_picture if message.text[/\d+/i]
@@ -56,10 +56,12 @@ class ChatMode
 			search_item(message.text) if message.text
 		when 'Now give your marketplace a name'
 			save_marketplace_name
-		when 'And a short description – where are you? What will you sell? Why should people use your marketplace?'
+		when /And a short description/
 			save_marketplace_description
-		when 'Enter passphrase which will be your password to this marketplace analytics'
+		when /^Enter passphrase/
 			save_marketplace_pass	
+		when 'Please enter passphrase for this marketplace'
+			check_passphrase	
 		end	 
 	end
 
@@ -90,8 +92,12 @@ class ChatMode
 			get_latest_ads
 		when /\/new/i
 			create_marketplace
-		when /\/admin/i
-			check_for_marketplaces	
+		when '/admin'
+			check_for_marketplaces
+		when /\/logout_admin/i
+			user.update_attribute( :current_admin_marketplace_id, nil )
+		when '/admin?'
+			admin?	
 		else
     	not_valid_request("Wrong command")
     end

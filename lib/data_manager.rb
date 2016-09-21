@@ -28,12 +28,10 @@ module DataManager
 	end	
 	  
 	def manage_contacts
-
 		user.update_attributes(phone: message.contact.phone_number,
 													 fname: message.contact.first_name,
 													 lname: message.contact.last_name)
-		add_picture_to_ad
-		
+		request('Would you like to add picture to ad?',answers: ['yes','no'])		
 	end
 
 end
