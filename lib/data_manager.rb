@@ -11,7 +11,8 @@ module DataManager
 
   def manage_documents
 
-    FileUploader.new(bot:bot).load(message.document.file_id,message.document.file_name)
+    FileUploader.new(bot:bot)
+			.load(message.document.file_id,message.document.file_name)
 
   end
   
@@ -20,7 +21,14 @@ module DataManager
 		user.longitude=message.location.longitude
   	user.latitude=message.location.latitude
   	user.save
-		text="Your location is saved, thank you. Gain is an powerful local ads bot to discover an sell great products around you. \n\nUse Gain with the following simple commands:\n\ntype 'search' to search\n\ntype 'sell' and wait for the prompt to sell.\n\nYou can also navigate using the buttons at the bottom of the screen.\n\nBy using Gain you agree to our terms & conditions: www.gain.im/terms.html"
+		text="Your location is saved, thank you. Gain is an powerful"+
+				 "local ads bot to discover an sell great products around you."+
+				 " \n\nUse Gain with the following simple commands:"+
+				 "\n\ntype 'search' to search\n\ntype 'sell'"+
+				 " and wait for the prompt to sell.\n\nYou can also"+
+				 " navigate using the buttons at the bottom of the screen."+
+				 "\n\nBy using Gain you agree to our terms & conditions:"+
+				 " www.gain.im/terms.html"
   	MessageSender.new(bot: bot, chat: message.from, text: text).send
 		@answers=['Show more','Sell something']
 		get_latest_ads
@@ -31,7 +39,7 @@ module DataManager
 		user.update_attributes(phone: message.contact.phone_number,
 													 fname: message.contact.first_name,
 													 lname: message.contact.last_name)
-		request('Would you like to add picture to ad?',answers: ['yes','no'])		
+		request(text:'Would you like to add picture to ad?',answers: ['yes','no'])		
 	end
 
 end

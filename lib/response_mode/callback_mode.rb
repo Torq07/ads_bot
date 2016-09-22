@@ -33,9 +33,20 @@ class CallbackMode
       when /agreament_(.*)/
       	agreament($1)
       when /admin_(\d+)/
-      	user.update_attribute(:requested_marketplace_id, $1)
-      	request('Please enter passphrase for\
- this marketplace',force_reply: true)	
+      	attribute = if user.superuser?  
+      		user.update_attribute(:current_admin_marketplace_id, $1)
+      		c = "request(text:\"Thank you! You have logged into \"+
+					 \"administrative area\")"
+      	else
+      		user.update_attribute(:requested_marketplace_id, $1)
+      		c = "request(text:'Please enter passphrase for this marketplace',
+      					 force_reply: true)"	
+      	end		
+      	eval c
+      when /logout/i
+      	logout	
+      when /moderate_(.*)/
+      	moderate_($1)		
 	  end
 	end 
 
@@ -44,10 +55,13 @@ class CallbackMode
 						 .shift(3)
 						 .map{ |res| "*ID:* _#{res[0]}_\n#{res[1]}"}
 						 .join("\n\n")
-		text,@answers="There are no ads which match your search.\
-Type 'search' to search again or press the 'latest ads' button.\
-Have something to sell? Press the 'sell something' button to add\
-it.",["Search again","Latest Ads","Sell something"] if text.length<2
+		if text.length<2
+			text,@answers="There are no ads which match your search."+
+										"Type 'search' to search again or press the"+
+										"'latest ads' button. Have something to sell?"+ 
+										"Press the 'sell something' button to add it.",
+										["Search again","Latest Ads","Sell something"]
+		end								
 		MessageSender.new(bot: bot,
 										  chat: message.from,
 										  answers: @answers,
@@ -64,12 +78,30 @@ it.",["Search again","Latest Ads","Sell something"] if text.length<2
 			"Thank you, your marketplace is created"
 		elsif marketplace 
 			marketplace.destroy 
-			"Your marketplace cannot be created if you do not agree\
- with our terms, your request has been cancelled"
+			"Your marketplace cannot be created if you do not agree"+
+ 			"with our terms, your request has been cancelled"
 		end
 
-		request(text, answers: @answers)	
+		request(text:text, answers: @answers)	
 
+	end
+
+	def moderate_(attribute)
+		photo=nil
+		text=nil
+		results=Marketplace.find(user.current_admin_marketplace_id)
+			.ads.pluck(attribute.to_sym,:user_id,:id)
+		results.each do |item|
+			answers=[
+						{text:'Delete', callback_data:"delete_ad_#{item[2]}"},
+						{text:'Ban user', callback_data:"ban_user_#{item[1]}"}
+							]	
+			if attribute == 'message'
+				request(text: item[0], inline: true, answers: answers)
+			else
+				request(photo: item[0], inline: true, answers: answers)
+			end	
+		end	
 	end
 	
 end	

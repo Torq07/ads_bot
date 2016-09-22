@@ -1,6 +1,6 @@
 module RequestsHandler
 	
-	def request(text='',opts={})
+	def request(opts={text:''})
 
 		if opts[:inline]
 			opts[:answers]=agregate_inline_answers(opts[:answers]) 
@@ -9,7 +9,7 @@ module RequestsHandler
 		command,content = if opts[:photo] 
 			 ['send_photo', "photo: \"#{opts[:photo]}\""]
 			else
-			 ['send', "text: \"#{text}\""]
+			 ['send', "text: \"#{opts[:text]}\""]
 		end	
 		 
 		send_code=%Q{ MessageSender.new(bot: bot, 
@@ -19,7 +19,7 @@ module RequestsHandler
 			answers: opts[:answers],
 			inline: opts[:inline],
 			contact_request: opts[:contact_request],
-			location_request: opts[:location_request]).#{command} if text}
+			location_request: opts[:location_request]).#{command} }
 		eval send_code										
 
 	end
@@ -31,18 +31,18 @@ module RequestsHandler
 	end
 
 	def not_valid_request(text="")
-		request("This is not valid request. #{text}")
+		request(text:"This is not valid request. #{text}")
 	end
 
 	def agreament_request
-		text="In order to finish, please read the Terms & Conditions\
- for the Gain Marketplace Bot\
- [www.gain.im/terms](http://www.gain.im/terms) and press agree."
+		text="In order to finish, please read the Terms & Conditions"+
+ 				 "for the Gain Marketplace Bot"+
+ 				 "[www.gain.im/terms](http://www.gain.im/terms) and press agree."
 		answers=[
 						{text:"Agree", callback_data: 'agreament_true'},
 	 					{text:'Disagree', callback_data: 'agreament_false'}
 	 					]
-		request(text, answers: answers, inline: true)
+		request(text:text, answers: answers, inline: true)
 	end
 
 	def get_next_results
@@ -52,13 +52,13 @@ module RequestsHandler
 						 .map{ |res| "*ID:* _#{res[0]}_\n #{res[1]}"}
 						 .join("\n\n")
 	  if text.length<2
-			text = "There are no ads which match your search.\
- Type 'search' to search again or press the\
- 'latest ads' button. Have something to sell?\
- Press the 'sell something' button to add it."
+			text = "There are no ads which match your search."+
+ 						 "Type 'search' to search again or press the"+
+ 						 "'latest ads' button. Have something to sell?"+
+ 						 "Press the 'sell something' button to add it."
 			@answers = ["Search again","Latest Ads","Sell something"] 
 		end	
-		request(text,answers: @answers)
+		request(text:text,answers: @answers)
 		user.save
 
 	end	
@@ -100,9 +100,9 @@ module RequestsHandler
 				{text: 'Show more',
 				 callback_data: "Show more search result" }
 							]
-			request('',inline: true, 
-								 photo: required_ad.picture,
-								 answers: answers )
+			request(inline: true, 
+							photo: required_ad.picture,
+							answers: answers )
 		else
 			text="There is no image for this ad"
 			answers=[
@@ -131,13 +131,48 @@ module RequestsHandler
 		
 	end
 
-	def admin?
-		text=if user.current_admin_marketplace_id
-			"Currently administrating marketplace \##{user.current_admin_marketplace_id}"	
+	def analytics
+		text = if user.current_admin_marketplace_id
+			mp=Marketplace.find(user.current_admin_marketplace_id)
+			"Total number of ads: #{mp.ads.count},\n"+
+		  "Total number of users: #{mp.users.count}"
 		else
-			'Nope'
+			"Sorry you're not admin"
 		end	
-		request(text)		
+		if user.superuser?
+			text+=",\nTotal user marketplaces: #{Marketplace.all.count}"
+		end	
+		request(text:text)
+	end
+
+	def admin?
+		if user.current_admin_marketplace_id
+			answers = [{text:'Logout?',
+				 callback_data:"logout"}]
+			text = "Currently administrating marketplace "+
+			"#{Marketplace.find(user.current_admin_marketplace_id).name}"
+			request(text:text, 
+							inline: true,
+							answers: answers)
+		else
+			request(text:'Nope')
+		end	
+		
+	end
+
+	def logout
+		user.update_attribute( :current_admin_marketplace_id, nil )
+		request(text:'You\'re sign out from administrative area')
+	end
+
+	def moderate
+		answers=[
+			{text:'Text',callback_data:'moderate_message'},
+			{text:'Photo',callback_data:'moderate_picture'}
+						]
+		request(text:'What will be moderate?',
+			inline: true,
+			answers: answers)
 	end
 
 end 

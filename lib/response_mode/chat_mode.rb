@@ -68,36 +68,47 @@ class ChatMode
 	def manage_direct_messages
 		case message.text 
     when '/start'
-    	request(I18n.t('greeting_message'),location_request: 'Send location')
+    	request(text:I18n.t('greeting_message'),
+    					location_request: 'Send location')
     when '/stop'
-    	request(I18n.t('farewell_message'))
+    	request(text:I18n.t('farewell_message'))
       answer_with_farewell_message
 		when 'Search again'
-			request("Please enter what are you searching?", force_reply:true)
+			request(text:"Please enter what are you searching?", 
+							force_reply:true)
     when /contact/i
-    	request("Please enter\s\sID", force_reply:true)  
-    when /\Asell/i 
-    	request('Please enter your ad text. Be sure to include a good description as well as a price. There is a 140 character limit. When you\'re done, press send and you can add a photo in the next step.',force_reply:true)
+    	request(text:"Please enter\s\sID", force_reply:true)  
+    when /\Asell/i
+    	text='Please enter your ad text. Be sure to include'+
+    			 'a good description as well as a price. '+
+    			 'There is a 140 character limit.'+
+    			 ' When you\'re done, press send and you can add '+
+    			 'a photo in the next step.' 
+    	request(text:text,force_reply:true)
     when /\Ano/i
     	save_ad
     when /\byes\b/i
-    	request('Please upload picture for this ad')
+    	request(text:'Please upload picture for this ad')
     when /\Asearch(.*)/i
     	search_item($1)
     when /more/i
 			get_next_results
 		when /show picture/i
-			request("Please enter\sID",force_reply:true)
+			request(text:"Please enter\sID",force_reply:true)
 		when /latest ads/i
 			get_latest_ads
 		when /\/new/i
 			create_marketplace
 		when '/admin'
 			check_for_marketplaces
-		when /\/logout_admin/i
-			user.update_attribute( :current_admin_marketplace_id, nil )
+		when /analytics/i
+			analytics	
+		when /logout/i
+			logout
+		when /moderate/i
+			moderate	
 		when '/admin?'
-			admin?	
+			admin?
 		else
     	not_valid_request("Wrong command")
     end

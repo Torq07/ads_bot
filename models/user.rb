@@ -26,4 +26,9 @@ class User < ActiveRecord::Base
 
 	end
 
+	def superuser?
+		superusers=[]
+		superusers.include?(self.uid) ? true : false
+	end
+
 end
