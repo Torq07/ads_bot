@@ -105,8 +105,12 @@ class ChatMode
 			analytics	
 		when /logout/i
 			logout
+		when /leave/
+			user.update_attribute(:marketplace_id,nil)	
 		when /moderate/i
 			moderate	
+		when /join/i
+			join_marketplace
 		when '/admin?'
 			admin?
 		else

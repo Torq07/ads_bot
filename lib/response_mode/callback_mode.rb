@@ -1,5 +1,6 @@
 require './lib/message_sender'
 require './models/user'
+require './models/ad'
 require './lib/requests_handler'
 
 class CallbackMode
@@ -43,10 +44,17 @@ class CallbackMode
       					 force_reply: true)"	
       	end		
       	eval c
+      when /join_(.*)_(\d+)/
+      	join_marketplace($1,$2)
+      	
       when /logout/i
       	logout	
       when /moderate_(.*)/
       	moderate_($1)		
+      when /delete_ad_(\d+)/
+      	delete_ad_from_marketplace($1)
+      when /ban_user_(.*)/
+      	ban_user_in_markteplace($1)
 	  end
 	end 
 
@@ -104,4 +112,26 @@ class CallbackMode
 		end	
 	end
 	
+	def join_marketplace(name,id)
+		Marketplace.find(id).banned_id?(user.id)
+		unless Marketplace.find(id).banned_id?(user.id)
+  		user.update_attribute(:marketplace_id,id)	
+  		text="You enter to #{name} marketplace"
+  	else
+  		text="Sorry your account is banned in this particular marketplace"
+  	end	
+  	request(text:text,answers: @answers)
+	end
+
+	def delete_ad_from_marketplace(ad_id)
+		Ad.find(ad_id).update_attribute(:marketplace_id,nil)
+	end
+
+	def ban_user_in_markteplace(user_id)
+		mt=Marketplace.find(user.current_admin_marketplace_id)
+		mt.banned_id<<user_id unless mt.banned_id.include?(user_id)
+		User.find(user_id).update_attribute( :marketplace_id, nil )
+		mt.save
+	end
+
 end	

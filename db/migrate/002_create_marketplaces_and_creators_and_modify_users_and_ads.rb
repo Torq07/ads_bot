@@ -14,7 +14,7 @@ class CreateMarketplacesAndCreatorsAndModifyUsersAndAds < ActiveRecord::Migratio
       t.float :latitude
       t.float :longitude
       t.boolean :agreament
-      t.integer :banned_id, array: true, default: []
+      t.text :banned_id
     end
 
     reversible do |dir|
@@ -38,3 +38,4 @@ class CreateMarketplacesAndCreatorsAndModifyUsersAndAds < ActiveRecord::Migratio
 
   end
 end
+  

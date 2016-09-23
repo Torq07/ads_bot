@@ -175,4 +175,11 @@ module RequestsHandler
 			answers: answers)
 	end
 
+	def join_marketplace
+		markets=Marketplace.near( user.address, 50, :units => :km )
+							.map{|m| {text:m[:name], callback_data:"join_#{m[:name]}_#{m[:id]}"} }
+		request(text:"Which of marketplaces you would"+
+ 						"like to join?",inline: true, answers: markets)
+	end
+
 end 
