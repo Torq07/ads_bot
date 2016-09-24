@@ -1,4 +1,8 @@
-module AdsCreator
+require_relative 'main_requests'
+
+module Ads
+
+	include MainRequests
 
 	def initialize_ad
 		new_ad=user.ads.create(message:message.text, address:user.address)

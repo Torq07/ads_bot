@@ -1,18 +1,15 @@
 require './lib/message_sender'
-require './lib/marketplace_creator'
-require './lib/requests_handler'
-require './lib/data_manager'
-require './lib/ads_creator'
 Dir['./models/*'].each {|file| require file} 
+Dir['./lib/entities/*'].each {|file| require file} 
 
 class NoAd < StandardError ; end
 
 class ChatMode
 
-	include MarketplaceCreator
-	include RequestsHandler
+	include Marketplaces
+	include Requests
 	include DataManager
-	include AdsCreator
+	include Ads
 
 	attr_reader :message, :bot, :user, :answers
 	attr_accessor :ad
@@ -26,6 +23,7 @@ class ChatMode
 		@answers=["Show more","Search again",
 						 "Show contact","Show picture",
 						 "Latest ads","Sell something"]
+		check_place
   end
 
   def response
@@ -51,7 +49,7 @@ class ChatMode
 		when "Please enter ID"
 			show_picture if message.text[/\d+/i]
 		when 'Please enter  ID'
-			show_contact if message.text[/\d+/i]
+			show_contact_by_ad_id if message.text[/\d+/i]
 		when 'Please enter what are you searching?'
 			search_item(message.text) if message.text
 		when 'Now give your marketplace a name'
@@ -105,12 +103,12 @@ class ChatMode
 			analytics	
 		when /logout/i
 			logout
-		when /leave/
-			user.update_attribute(:marketplace_id,nil)	
+		when /leave/i
+			leave_mp
 		when /moderate/i
 			moderate	
-		when /join/i
-			join_marketplace
+		when /^marketplaces/i
+			marketplaces_around
 		when '/admin?'
 			admin?
 		else

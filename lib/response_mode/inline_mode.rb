@@ -1,4 +1,6 @@
 require './lib/message_sender'
+Dir['./models/*'].each {|file| require file} 
+Dir['./lib/entities/*'].each {|file| require file} 
 
 class InlineMode
 

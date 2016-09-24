@@ -1,10 +1,7 @@
-require './models/user'
-require './models/creator'
-require './models/marketplace'
 require './lib/message_sender'
-require_relative 'response_mode/callback_mode'
-require_relative 'response_mode/inline_mode'
-require_relative 'response_mode/chat_mode'
+Dir['./models/*'].each {|file| require file} 
+Dir['./lib/entities/*'].each {|file| require file} 
+Dir['./lib/response_mode/*'].each {|file| require file} 
 
 class MessageResponder
   
