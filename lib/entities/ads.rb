@@ -7,13 +7,8 @@ module Ads
 	def initialize_ad
 		new_ad=user.ads.create(message:message.text, address:user.address)
 		user.marketplace ? user.marketplace.ads<<new_ad : user.ads<<new_ad
-		if user.phone
-			request(text:'Would you like to add picture to ad?',
-							answers: ['yes','no'])
-		else	
-			request(text:'Please provide your contact', 
-							contact_request:'Send contact' )
-		end  
+		request(text:'Would you like to add picture to ad?',
+							answers: ['yes','no']) 
 
 	end
 

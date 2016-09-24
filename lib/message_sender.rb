@@ -55,6 +55,8 @@ class MessageSender
     # document is path to file needed to send
     if File.exist?(document) 
       bot.api.send_document(chat_id: chat.id, document: Faraday::UploadIO.new(document) )
+     else 
+      bot.api.send_document(chat_id: chat.id, document: document)
     end  
   end
     
@@ -76,12 +78,12 @@ class MessageSender
   def reply_markup
     if answers&&inline
       ReplyMarkupFormatter.new(answers).get_inline_markup    
+    elsif answers&&contact_request
+      ReplyMarkupFormatter.new(answers).get_contact_request(contact_request)
+    elsif answers&&location_request
+      ReplyMarkupFormatter.new(answers).get_location_request(location_request) 
     elsif answers
       ReplyMarkupFormatter.new(answers).get_markup
-    elsif contact_request
-      ReplyMarkupFormatter.new(answers).get_contact_request(contact_request)
-    elsif location_request
-      ReplyMarkupFormatter.new(answers).get_location_request(location_request) 
     elsif force_reply
       ReplyMarkupFormatter.new(answers).get_force_reply
     end

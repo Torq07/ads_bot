@@ -17,17 +17,6 @@ module Requests
 		@answers[6] = value
 	end
 
-	def agreament_request
-		text="In order to finish, please read the Terms & Conditions"+
- 				 "for the Gain Marketplace Bot"+
- 				 "[www.gain.im/terms](http://www.gain.im/terms) and press agree."
-		answers=[
-						{text:"Agree", callback_data: 'agreament_true'},
-	 					{text:'Disagree', callback_data: 'agreament_false'}
-	 					]
-		request(text:text, answers: answers, inline: true)
-	end
-
 	def agreament(desicion)
 		
 		marketplace=user.creator.marketplaces.find_by(agreament: nil)

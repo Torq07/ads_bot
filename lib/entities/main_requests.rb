@@ -28,4 +28,10 @@ module MainRequests
 		request(text:"This is not valid request. #{text}")
 	end
 
+	def save_(hash)
+		hash[:value]||=message.text.strip
+		hash[:instance].update_attribute(hash[:attribute], hash[:value])		
+		request(hash[:r_hash]) if hash[:r_hash]
+	end
+
 end	
