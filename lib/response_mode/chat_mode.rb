@@ -20,9 +20,8 @@ class ChatMode
     @user = options[:user]
     @ad=user.ads.last || nil
     @marketplace=user.creator.marketplaces.last || nil 
-		@answers=["Show more","Search again",
-						 "Show contact","Show picture",
-						 "Latest ads","Sell something"]
+		@answers=["/Show more","/Search",
+						 "/Latest ads","/Sell something"]
 		check_place
   end
 
@@ -48,7 +47,7 @@ class ChatMode
 		when  /Please enter your ad text/
 			initialize_ad
 		when "Please enter ID"
-			show_picture if message.text[/\d+/i]
+			show_picture(message.text.strip) if message.text[/\d+/i]
 		when 'Please enter  ID'
 			show_contact_by_ad_id if message.text[/\d+/i]
 		when 'Please enter what are you searching?'
@@ -133,7 +132,7 @@ class ChatMode
     when '/stop'
     	request(text:I18n.t('farewell_message'))
       answer_with_farewell_message
-		when 'Search again'
+		when 'Search'
 			request(text:"Please enter what are you searching?", 
 				force_reply:true)
 		when 'Send contact manually'
@@ -141,7 +140,7 @@ class ChatMode
 				force_reply: true)		
     when /^contact/i
     	request(text:"Please enter\s\sID", force_reply:true)  
-    when /\Asell/i
+    when /\/sell/i
     	text='Please enter your ad text. Be sure to include'+
     			 'a good description as well as a price. '+
     			 'There is a 140 character limit.'+
@@ -152,32 +151,35 @@ class ChatMode
     	save_ad
     when /\byes\b/i
     	request(text:'Please upload picture for this ad')
-    when /\Asearch(.*)/i
-    	search_item($1)
-    when /more/i
+    when /\/show more/i
 			get_next_results
-		when /show picture/i
+		when /\/show picture/i
 			request(text:"Please enter\sID",force_reply:true)
-		when /latest ads/i
+		when /\/latest/i
+			check_place
 			get_latest_ads
 		when /\/new/i
 			create_marketplace
 		when '/admin'
 			check_for_marketplaces
-		when /analytics/i
+		when /\/analytics/i
 			analytics	
-		when /logout/i
+		when /\/logout/i
 			logout
-		when /leave/i
+		when /\/leave/i
 			leave_mp
-		when /moderate/i
+		when /\/moderate/i
 			moderate	
-		when /^marketplaces/i
-			marketplaces_around
+		when /\/markets\z/i
+			markets
+		when /\/markets?/i
+			markets?	
 		when '/admin?'
 			admin?
+		when /\/Help/i
+			help
 		else
-    	not_valid_request("Wrong command")
+    	search_item(message.text)
     end
 	end
 

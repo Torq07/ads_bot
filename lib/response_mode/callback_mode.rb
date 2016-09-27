@@ -16,15 +16,16 @@ class CallbackMode
     @bot = options[:bot]
     @message = options[:message]
     @user = options[:user]
-		@answers=["Show more","Search again",
-						 "Show contact","Show picture",
-						 "Latest ads","Sell something"]
+		@answers=["/Show more","/Search",
+						 "/Latest ads","/Sell something"]
   end
 	 
   def response
 	  case message.data
 	    when /contact_(\d+)/i
 	    	show_contact_by_request_($1)
+      when /picture_(\d+)/i
+        show_picture($1) 
       when /Show more search result/i 
         get_next_results 
       when /agreament_(.*)/

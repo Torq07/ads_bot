@@ -13,8 +13,11 @@ module Requests
 	end
 
 	def check_place
-		value = user.marketplace_id ? "Leave marketplace" : "Marketplaces"
-		@answers[6] = value
+		if user.marketplace_id 
+			@answers = @answers.reject{|a| a=="/Markets"}.push("/Leave market")
+		else
+			@answers = @answers.reject{|a| a=="/Leave market"}.push("/Markets")
+		end	
 	end
 
 	def agreament(desicion)
@@ -52,13 +55,11 @@ module Requests
 		request( text: User.find(id.to_i).contacts, answers:@answers )
 	end
 
-	def show_picture
-		required_ad=Ad.find(message.text.to_i)
+	def show_picture(id)
+		required_ad=Ad.find(id)
 
 		if required_ad.picture
 			answers=[
-				{text: "Seller contact",
-				 callback_data: "contact_#{required_ad.user_id}"},
 				{text: 'Show more',
 				 callback_data: "Show more search result" }
 							]
@@ -68,9 +69,7 @@ module Requests
 		else
 			text="There is no image for this ad"
 			answers=[
-				{text:"Request seller contact",
-				 callback_data: "contact_#{required_ad.user_id}" },
-				{text:'Show more search results',
+				{text:'Show more',
 				 callback_data:"Show more search results"}
 							]
 			request(text: text, answers:answers, inline: true)
@@ -95,19 +94,22 @@ module Requests
 		request(text:text)
 	end
 
-	def admin?
-		if user.current_admin_marketplace_id
-			answers = [{text:'Logout?',
-				 callback_data:"logout"}]
-			text = "Currently administrating marketplace "+
-			"#{Marketplace.find(user.current_admin_marketplace_id).name}"
-			request(text:text, 
-							inline: true,
-							answers: answers)
+	def admin?(user_for_check=nil)
+		if user_for_check
+			user_for_check.current_admin_marketplace_id
 		else
-			request(text:'Nope')
+			if user.current_admin_marketplace_id
+				answers = [{text:'Logout?',
+					 callback_data:"logout"}]
+				text = "Currently administrating #"+
+				"#{Marketplace.find(user.current_admin_marketplace_id).name}"
+				request(text:text, 
+								inline: true,
+								answers: answers)
+			else
+				request(text:'Nope')
+			end	
 		end	
-		
 	end
 
 	def login_request(mp_id)
@@ -125,7 +127,38 @@ module Requests
 
 	def logout
 		user.update_attribute( :current_admin_marketplace_id, nil )
-		request(text:'You\'re sign out from administrative area')
+		request(text:'You\’ve signed out as an admin')
+	end
+
+	def help
+		if user.current_admin_marketplace_id
+			text = "Marketplace admin commands:"+
+						"\n/admin - log in to marketplace"+
+						"\n/admin? - check is currently logged as admin"+
+						"\n/analytics - show marketplace analytics "+
+						"\n/moderate - moderate marketplace"+
+						"\n/logout – logout as admin "+
+						"\n\nGeneral marketplace commands: "+
+						"\n\/new - create and run your own marketplace"+
+						"\n\/markets? – shows which marketplace you’re in "+
+						"\n\/leave – leave the current marketplace"+
+						"\n\n\/markets – shows marketplaces around you"+
+						"\n\/join – join a marketplace"+
+						"\n\nJust write a message to search"+
+						"\n\n\/sell – list an item to sell"
+		else	
+			text = "\n\nUse Gain with these simple commands:"+
+						 "Just write a message to search"+
+						 "\n/sell – list an item to sell"+
+						 "\n/markets – shows marketplaces around you"+
+						 "\n/join – join a marketplace"+
+						 "\n/new - create and run your own marketplace"+
+						 "\n/markets? – shows which marketplace you’re in" 
+						 "\n/leave – leave the current marketplace"+
+						 "\nFor more help, join the Gain channel at"+
+						 " www.telegram.me/gainim "
+		end		 
+		request(text: text, answers: @answers)
 	end
 
 end 

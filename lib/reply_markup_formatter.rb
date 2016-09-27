@@ -8,7 +8,6 @@ class ReplyMarkupFormatter
   def get_markup
     Telegram::Bot::Types::ReplyKeyboardMarkup
       .new(keyboard: array.each_slice(2).to_a, 
-           one_time_keyboard: true, 
            resize_keyboard: true)
   end
 
@@ -21,7 +20,6 @@ class ReplyMarkupFormatter
     kb << Telegram::Bot::Types::KeyboardButton.new(text: button_text, 
            request_contact: true)                                           
     Telegram::Bot::Types::ReplyKeyboardMarkup.new(keyboard: kb, 
-      one_time_keyboard: true, 
       resize_keyboard: true)     
   end  
   
@@ -30,7 +28,6 @@ class ReplyMarkupFormatter
     kb << Telegram::Bot::Types::KeyboardButton.new(text: button_text, 
             request_location: true)
     Telegram::Bot::Types::ReplyKeyboardMarkup.new(keyboard: kb,
-       one_time_keyboard: true,
        resize_keyboard: true)     
   end 
 

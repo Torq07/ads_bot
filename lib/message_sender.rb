@@ -1,5 +1,6 @@
 require './lib/reply_markup_formatter'
 require './lib/app_configurator'
+require './lib/file_uploader'
 
 class MessageSender
   attr_reader :bot
@@ -55,8 +56,8 @@ class MessageSender
     # document is path to file needed to send
     if File.exist?(document) 
       bot.api.send_document(chat_id: chat.id, document: Faraday::UploadIO.new(document) )
-     else 
-      bot.api.send_document(chat_id: chat.id, document: document)
+    else
+      bot.api.send_document(chat_id: chat.id, document: document )
     end  
   end
     
