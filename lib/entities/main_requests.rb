@@ -25,7 +25,7 @@ module MainRequests
 	end
 
 	def not_valid_request(text="")
-		request(text:"This is not valid request. #{text}")
+		request(text:"That’s not a valid command. #{text}")
 	end
 
 	def save_(hash)
@@ -33,5 +33,5 @@ module MainRequests
 		hash[:instance].update_attribute(hash[:attribute], hash[:value])		
 		request(hash[:r_hash]) if hash[:r_hash]
 	end
-
+	
 end	

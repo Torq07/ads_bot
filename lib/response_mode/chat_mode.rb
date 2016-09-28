@@ -132,7 +132,7 @@ class ChatMode
     when '/stop'
     	request(text:I18n.t('farewell_message'))
       answer_with_farewell_message
-		when 'Search'
+		when /\/Search/i
 			request(text:"Please enter what are you searching?", 
 				force_reply:true)
 		when 'Send contact manually'
@@ -178,6 +178,8 @@ class ChatMode
 			admin?
 		when /\/Help/i
 			help
+		when /\/Photo/i
+			photo_setting
 		else
     	search_item(message.text)
     end

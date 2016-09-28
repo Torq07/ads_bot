@@ -2,6 +2,12 @@ require './lib/reply_markup_formatter'
 require './lib/app_configurator'
 require './lib/file_uploader'
 
+class String
+  def to_hashtag
+   "#"+self.split.map(&:capitalize).join
+  end
+end
+
 class MessageSender
   attr_reader :bot
   attr_reader :text

@@ -46,27 +46,30 @@ module Marketplaces
 			text = 'Sorry your password is incorrect.'+
 						 'Please remember that pass is case sensetive'	
 		end	
-			request(text:text,answers: @answers)
+		
+		request(text:text,answers: @answers)
 	end
 
 	def join_marketplace(name,id)
-		
-		Marketplace.find(id).banned_id?(user.id)
+
 		unless Marketplace.find(id).banned_id?(user.id)
   		user.update_attribute(:marketplace_id,id)	
-  		text="You enter to #{name} marketplace"
+  		text="You have joined #{name.to_hashtag}"
   	else
   		text="Sorry your account is banned in this particular marketplace"
   	end	
+
   	check_place
   	request(text:text,answers: @answers)
 
 	end
 
 	def leave_mp
+		name=Marketplace.find(user.marketplace_id).name
 		user.update_attribute(:marketplace_id,nil)	
+		
 		check_place
-		request(text: 'You have left marketplace', answers: @answers)
+		request(text: "You have left marketplace #{name.to_hashtag}", answers: @answers)
 	end
 
 

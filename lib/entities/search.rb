@@ -13,7 +13,10 @@ module Search
 		
 		results=obj.where( t[:message].matches( pattern ) )
 			.near( user.address, 20, :units => :km )
-			.map{ |res| [res.id, res.message, res.user_id] }
+			.map{ |res| [res.id, 
+									 res.message, 
+									 res.user_id, 
+									 res.marketplace_id] }
 		user.update_attribute(:results,results)
 		
 		get_next_results
@@ -25,19 +28,44 @@ module Search
 		response_hash={}
 
 		results=user.results.shift(3).map do |ad| 
-			{
-				text:"*ID:* _#{ad[0]}_\n #{ad[1]}",
-				answers: [
-					{text:"Show contact",callback_data: "contact_#{ad[2]}" },
-					{text:"Show picture",callback_data: "picture_#{ad[0]}" }
-				],
-				inline: true
-			}
+			
+			text = if ad[3]
+				market_name=Marketplace.find(ad[3].to_i)
+															 .name
+				"*ID:* _#{ad[0]}_\n #{ad[1]} #{market_name.to_hashtag}"
+			else
+				"*ID:* _#{ad[0]}_\n #{ad[1]}"
+			end
+
+
+			if user.photo_setting
+				[
+				 ad[0],
+				 {text: text},
+				 [{text:"Show contact",callback_data: "contact_#{ad[2]}" }]
+				]
+			else	
+				[
+					{
+						text: text,
+						answers: [
+							{text:"Show contact",callback_data: "contact_#{ad[2]}" },
+							{text:"Show picture",callback_data: "picture_#{ad[0]}" }
+						],
+						inline: true
+					}	
+				]
+			end
 		end	
 		 
 	  if results.count>0
 	  	results.each do |result|
-				request(result)
+	  		if user.photo_setting
+	  			request(result[1])
+	  			show_picture(result[0],result[2]) 
+	  		else
+	  			request(result[0])
+	  		end	
 	  	end
 	  else	
 			response_hash[:text] = "There are no ads which match your search."+
@@ -59,10 +87,15 @@ module Search
 		results=obj.near( user.address, 50, :units => :km )
 			.last(30)
 			.to_a
-			.map{ |res| [res.id, res.message, res.user_id]}
+			.map{ |res| [res.id, res.message, res.user_id, res.marketplace_id]}
 		user.update_attribute(:results,results)
 		get_next_results
 
+	end
+
+	def photo_setting
+		user.toggle!(:photo_setting)
+		request(text: "Show photo: #{user.photo_setting}")
 	end
 
 end

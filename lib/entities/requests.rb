@@ -55,11 +55,11 @@ module Requests
 		request( text: User.find(id.to_i).contacts, answers:@answers )
 	end
 
-	def show_picture(id)
+	def show_picture(id,answers=nil)
 		required_ad=Ad.find(id)
 
 		if required_ad.picture
-			answers=[
+			answers||=[
 				{text: 'Show more',
 				 callback_data: "Show more search result" }
 							]
@@ -68,15 +68,15 @@ module Requests
 							answers: answers )
 		else
 			text="There is no image for this ad"
-			answers=[
+			answers||=[
 				{text:'Show more',
 				 callback_data:"Show more search results"}
 							]
-			request(text: text, answers:answers, inline: true)
+			request(text: text, answers: answers, inline: true)
 		end
 
-		rescue 
-		  not_valid_request("There is no AD with this ID")	
+		# rescue 
+		#   not_valid_request("There is no AD with this ID")	
 
 	end 
 
@@ -126,8 +126,13 @@ module Requests
 	end
 
 	def logout
-		user.update_attribute( :current_admin_marketplace_id, nil )
-		request(text:'You\’ve signed out as an admin')
+		hash = if user.current_admin_marketplace_id
+			user.update_attribute( :current_admin_marketplace_id, nil )
+			{text:'You\’ve signed out as an admin'}
+		else
+			{text:'You\'re not an admin to logout'}
+		end	
+		request(hash)
 	end
 
 	def help
