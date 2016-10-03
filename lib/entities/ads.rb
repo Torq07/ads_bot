@@ -7,15 +7,20 @@ module Ads
 	def initialize_ad
 		new_ad=user.ads.create(message:message.text, address:user.address)
 		user.marketplace ? user.marketplace.ads<<new_ad : user.ads<<new_ad
-		request(text:'Would you like to add a picture to ad?',
+		request(text:'Do you want to add a photo?',
 							answers: ['yes','no']) 
 
+	end
+
+	def no_text_for_ad
+		request(text: "Please describe what you’re selling with words :) next you’ll add a photo.",
+						force_reply: true)
 	end
 
 	def save_ad  
 		if @ad
 			@ad.save 
-			answers=["/Sell something","/Latest ads","/Help"]
+			answers=["Sell","Latest ads","Help"]
 			request(text:"Thank you, your ad is now saved. It's ID is: #{@ad.id}",
 							answers:answers)
 		end	

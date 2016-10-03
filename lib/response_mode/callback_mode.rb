@@ -16,8 +16,8 @@ class CallbackMode
     @bot = options[:bot]
     @message = options[:message]
     @user = options[:user]
-		@answers=["/Show more","/Search",
-						 "/Latest ads","/Sell something"]
+		@answers=["More","Help",
+						 "Latest ads","Sell"]
   end
 	 
   def response
@@ -26,7 +26,7 @@ class CallbackMode
 	    	show_contact_by_request_($1)
       when /picture_(\d+)/i
         show_picture($1) 
-      when /Show more search result/i 
+      when /More search result/i 
         get_next_results 
       when /agreament_(.*)/
       	agreament($1)

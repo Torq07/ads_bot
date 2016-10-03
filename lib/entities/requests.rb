@@ -13,11 +13,13 @@ module Requests
 	end
 
 	def check_place
-		if user.marketplace_id 
-			@answers = @answers.reject{|a| a=="/Markets"}.push("/Leave market")
+		if user.marketplace 
+			market_name=user.marketplace.name.split.map(&:capitalize).join 
+			@answers = @answers.reject{|a| a=="Markets"}.push("Leave #{market_name}").uniq
 		else
-			@answers = @answers.reject{|a| a=="/Leave market"}.push("/Markets")
+			@answers = @answers.reject{|a| a=~/Leave/}.push("Markets")
 		end	
+
 	end
 
 	def agreament(desicion)
@@ -60,8 +62,10 @@ module Requests
 
 		if required_ad.picture
 			answers||=[
-				{text: 'Show more',
-				 callback_data: "Show more search result" }
+				{text: 'More Results',
+				 callback_data: "More search result" },
+				{text: "Seller contact",
+				 callback_data: "contact_#{required_ad.user_id}"}
 							]
 			request(inline: true, 
 							photo: required_ad.picture,
@@ -69,14 +73,16 @@ module Requests
 		else
 			text="There is no image for this ad"
 			answers||=[
-				{text:'Show more',
-				 callback_data:"Show more search results"}
+				{text:'More Results',
+				 callback_data:"More search results"},
+				{text: "Seller contact",
+				 callback_data: "contact_#{required_ad.user_id}"} 
 							]
 			request(text: text, answers: answers, inline: true)
 		end
 
-		# rescue 
-		#   not_valid_request("There is no AD with this ID")	
+		rescue 
+		  not_valid_request("There is no AD with this ID")	
 
 	end 
 
@@ -116,7 +122,8 @@ module Requests
 		attribute = if user.superuser?  
   		user.update_attribute(:current_admin_marketplace_id, mp_id)
   		hash={text:"Thank you! You have logged into "+
-			 					"administrative area"}
+			 					"administrative area",
+			 			answers: ['Analytics','Moderate','Logout']}
   	else
   		user.update_attribute(:requested_marketplace_id, mp_id)
   		hash={text:'Please enter passphrase for this marketplace',
@@ -135,7 +142,7 @@ module Requests
 		request(hash)
 	end
 
-	def help
+	def help(add_text='')
 		if user.current_admin_marketplace_id
 			text = "Marketplace admin commands:"+
 						"\n/admin - log in to marketplace"+
@@ -163,7 +170,7 @@ module Requests
 						 "\nFor more help, join the Gain channel at"+
 						 " www.telegram.me/gainim "
 		end		 
-		request(text: text, answers: @answers)
+		request(text: add_text+text, answers: @answers)
 	end
 
 end 

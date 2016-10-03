@@ -38,9 +38,9 @@ module Search
 			text = if ad[3]
 				market_name=Marketplace.find(ad[3].to_i)
 															 .name
-				"*ID:* _#{ad[0]}_\n #{ad[1]} #{market_name.to_hashtag}"
+				"#{ad[1]} #{market_name.to_hashtag}"
 			else
-				"*ID:* _#{ad[0]}_\n #{ad[1]}"
+				"#{ad[1]}"
 			end
 
 
@@ -78,7 +78,7 @@ module Search
  						 "Type 'search' to search again or press the"+
  						 "'latest ads' button. Have something to sell?"+
  						 "Press the 'sell something' button to add it."
-		  @answers = ["/Search","/Latest Ads","/Sell something"] 
+		  @answers = ["Latest Ads","Sell"] 
 		  check_place
 			response_hash[:answers] = @answers
 			request(response_hash)

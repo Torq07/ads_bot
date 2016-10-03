@@ -4,7 +4,7 @@ require './lib/file_uploader'
 
 class String
   def to_hashtag
-   "#"+self.split.map(&:capitalize).join
+   "%"+self.split.map(&:capitalize).join
   end
 end
 

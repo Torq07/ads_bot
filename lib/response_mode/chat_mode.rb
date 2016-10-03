@@ -20,8 +20,8 @@ class ChatMode
     @user = options[:user]
     @ad=user.ads.last || nil
     @marketplace=user.creator.marketplaces.last || nil 
-		@answers=["/Show more","/Search",
-						 "/Latest ads","/Sell something"]
+		@answers=["More","Help",
+						 "Latest ads","Sell"]
 		check_place
   end
 
@@ -44,8 +44,8 @@ class ChatMode
 
 	def manage_replies
 		case message.reply_to_message.text
-		when  /Please enter your ad text/
-			initialize_ad
+		when  /(?:Describe what you are selling)|(?:next you’ll add a photo)/
+			message.text ? initialize_ad : no_text_for_ad
 		when "Please enter ID"
 			show_picture(message.text.strip) if message.text[/\d+/i]
 		when 'Please enter  ID'
@@ -133,7 +133,7 @@ class ChatMode
     when '/stop'
     	request(text:I18n.t('farewell_message'))
       answer_with_farewell_message
-		when /\/Search/i
+		when /^\/?Search$/i
 			request(text:"Please enter what are you searching?", 
 				force_reply:true)
 		when 'Send contact manually'
@@ -141,45 +141,42 @@ class ChatMode
 				force_reply: true)		
     when /^contact/i
     	request(text:"Please enter\s\sID", force_reply:true)  
-    when /\/sell/i
-    	text='Please enter your ad text. Be sure to include'+
-    			 'a good description as well as a price. '+
-    			 'There is a 140 character limit.'+
-    			 ' When you\'re done, press send and you can add '+
-    			 'a photo in the next step.' 
+    when /^\/?sell$/i
+    	text='Describe what you are selling in less than 140 characters.'+
+    			 ' Include a price. In the next step you’ll add a photo.'
     	request(text:text,force_reply:true)
     when /\Ano/i
     	save_ad
     when /\byes\b/i
     	request(text:'Please upload picture for this ad')
-    when /\/show more/i
+    when /^\/?More$/i
 			get_next_results
-		when /\/show picture/i
+		when /^\/?show picture$/i
 			request(text:"Please enter\sID",force_reply:true)
-		when /\/latest/i
+		when /^\/?latest/i
 			check_place
 			get_latest_ads
-		when /\/new/i
+		when /^\/?new$/i
 			create_marketplace
 		when '/admin'
 			check_for_marketplaces
-		when /\/analytics/i
+		when /\/?analytics$/i
 			analytics	
-		when /\/logout/i
+		when /\/?logout$/i
 			logout
-		when /\/leave/i
+		when /^\/?leave/i
 			leave_mp
-		when /\/moderate/i
+		when /^\/?moderate$/i
 			moderate	
-		when /\/markets\z/i
+		when /^\/?markets$/i
 			markets
-		when /\/markets?/i
+		when /^\/?markets\?$/i
 			markets?	
 		when '/admin?'
 			admin?
-		when /\/Help/i
+		when /^\/?Help$/i
 			help
-		when /\/Photo/i
+		when /^\/?Photo$/i
 			photo_setting
 		else
     	search_item(message.text)

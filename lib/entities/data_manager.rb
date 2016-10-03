@@ -32,12 +32,7 @@ module DataManager
 		user.update_attributes(phone: message.contact.phone_number,
 			fname: message.contact.first_name,
 			lname: message.contact.last_name)
-		text="All saved, thank you. Gain is a powerful local"+
-				 "marketplace bot where you can discover and sell"+
-				 "great products and services."+
-				 "\n\n Your location set to: #{user.address.gsub('"','')}"
-		help		 
-		request(text: text)
+		help("All saved, thank you. Gain is your local marketplace.")
 	end
 
 end

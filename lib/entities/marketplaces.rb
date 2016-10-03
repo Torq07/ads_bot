@@ -16,7 +16,7 @@ module Marketplaces
 										.map{|m| {text:m[0], callback_data:"admin_#{m[1]}"} }
 		hash = if markets.count>0
 			{ 
-				text:"Which of marketplaces you would like to administrate?",
+				text:"Which marketplace would you like to admin?",
 				inline: true, 
 				answers: markets 
 			}	
@@ -41,7 +41,7 @@ module Marketplaces
 			)
 			text = "Thank you! You have logged into "+
 					 	 "administrative area"
-			@answers = ['/Analytics','/Moderate','/Logout']		 	 
+			@answers = ['Analytics','Moderate','Logout']		 	 
 		else
 			text = 'Sorry your password is incorrect.'+
 						 'Please remember that pass is case sensetive'	
@@ -51,14 +51,14 @@ module Marketplaces
 	end
 
 	def join_marketplace(name,id)
-
-		unless Marketplace.find(id).banned_id?(user.id)
+		market=Marketplace.find(id)
+		unless market.banned_id?(user.id)
   		user.update_attribute(:marketplace_id,id)	
   		text="You have joined #{name.to_hashtag}"
   	else
   		text="Sorry your account is banned in this particular marketplace"
   	end	
-
+  	name = market.name.split.map(&:capitalize).join
   	check_place
   	request(text:text,answers: @answers)
 
@@ -69,12 +69,12 @@ module Marketplaces
 		hash = if user.marketplace_id
 			name=Marketplace.find(user.marketplace_id).name
 			user.update_attribute(:marketplace_id,nil)	
+			check_place
 			{text: "You have left marketplace #{name.to_hashtag}", answers: @answers}
 		else
 			{text: "Sorry you not in marketplace to leave it",answers: @answers}
 		end	
 
-		check_place
 		request(hash)
 
 	end
@@ -110,13 +110,16 @@ module Marketplaces
 
 	def delete_ad_from_marketplace(ad_id)
 		Ad.find(ad_id).update_attribute(:marketplace_id,nil)
+		request(text:'Ad was removed', answers: @answers)
 	end
 
 	def ban_user_in_markteplace(user_id)
 		mt=Marketplace.find(user.current_admin_marketplace_id)
 		mt.banned_id<<user_id unless mt.banned_id.include?(user_id)
-		User.find(user_id).update_attribute( :marketplace_id, nil )
+		required_user=User.find(user_id)
+		required_user.update_attribute( :marketplace_id, nil )
 		mt.save
+		request(text: "User #{user.contacts} was banned", answers: @answers)
 	end
 
 	def moderate
@@ -149,10 +152,11 @@ module Marketplaces
 						{text:'Delete', callback_data:"delete_ad_#{item[2]}"},
 						{text:'Ban user', callback_data:"ban_user_#{item[1]}"}
 							]	
+			text = item[0] ? item[0] : 'No text description'				
 			if type == 'message'
-				request(text: item[0], inline: true, answers: answers)
+				request(text: text, inline: true, answers: answers)
 			else
-				request(photo: item[0], inline: true, answers: answers)
+				request(photo: text, inline: true, answers: answers)
 			end	
 		end	
 	end
