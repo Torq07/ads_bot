@@ -65,11 +65,18 @@ module Marketplaces
 	end
 
 	def leave_mp
-		name=Marketplace.find(user.marketplace_id).name
-		user.update_attribute(:marketplace_id,nil)	
 		
+		hash = if user.marketplace_id
+			name=Marketplace.find(user.marketplace_id).name
+			user.update_attribute(:marketplace_id,nil)	
+			{text: "You have left marketplace #{name.to_hashtag}", answers: @answers}
+		else
+			{text: "Sorry you not in marketplace to leave it",answers: @answers}
+		end	
+
 		check_place
-		request(text: "You have left marketplace #{name.to_hashtag}", answers: @answers)
+		request(hash)
+
 	end
 
 

@@ -123,7 +123,8 @@ class ChatMode
     when 'Send location manually'
     	MessageSender.new(bot: bot, 
 			chat: message.from, 
-			document: 'BQADAgADcQADTCzCAhcacdBHjkfpAg'
+			document: 'BQADAgADcQADTCzCAhcacdBHjkfpAg' #test
+			# document: 'BQADAgADcgADTCzCAhYmux2e-JtRAg' #gain
 			).send_document
     	request( text: 'Please [enter](http://www.latlong.net) your'+
     	 							' LatLong in this format'+

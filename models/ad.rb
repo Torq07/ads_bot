@@ -19,7 +19,7 @@ class Ad < ActiveRecord::Base
 	end
 	
 	def check_length
-		raise LongMessage.new if self.message.length>140	
+		raise LongMessage.new if self.message && self.message.length>140	
 	end
 
 end
