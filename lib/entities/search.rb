@@ -5,19 +5,25 @@ module Search
 
 	include MainRequests
 
-	def search_item(searching_item)
+	def search_item(searching_phrase)
 		
 		t=Ad.arel_table
 		obj = user.marketplace ? user.marketplace.ads : Ad
-		pattern="%#{searching_item.strip}%"
-		
-		results=obj.where( t[:message].matches( pattern ) )
-			.near( user.address, 20, :units => :km )
-			.map{ |res| [res.id, 
-									 res.message, 
-									 res.user_id, 
-									 res.marketplace_id] }
-		user.update_attribute(:results,results)
+		texts=searching_phrase.split
+		results=[]
+
+		texts.each do |searching_item|
+			pattern="%#{searching_item.strip}%"
+			
+			results<<obj.where( t[:message].matches( pattern ) )
+				.near( user.address, 20, :units => :km )
+				.map{ |res| [res.id, 
+										 res.message, 
+										 res.user_id, 
+										 res.marketplace_id] }
+		end									 
+
+		user.update_attribute(:results,results.flatten(1).uniq)
 		
 		get_next_results
 		

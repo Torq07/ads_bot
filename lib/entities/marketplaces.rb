@@ -115,7 +115,7 @@ module Marketplaces
 	def moderate
 		existed_ads=Marketplace.find(user.current_admin_marketplace_id)
 													 .ads
-													 .count
+													 .count if user.current_admin_marketplace_id
 		hash = if admin?(user) && existed_ads>0
 			answers=[
 				{text:'Text',callback_data:'moderate_message'},
