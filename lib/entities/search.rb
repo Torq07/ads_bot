@@ -9,21 +9,22 @@ module Search
 		
 		t=Ad.arel_table
 		obj = user.marketplace ? user.marketplace.ads : Ad
-		texts=searching_phrase.split
+		texts=searching_phrase.split.map(&:downcase)
 		results=[]
 
+		pattern="%#{texts.shift.strip}%"
+		
+		results=obj.where( t[:message].matches( pattern ) )
+			.near( user.address, 20, :units => :km )
+			.map{ |res| [res.id, 
+									 res.message, 
+									 res.user_id, 
+									 res.marketplace_id] }
 		texts.each do |searching_item|
-			pattern="%#{searching_item.strip}%"
-			
-			results<<obj.where( t[:message].matches( pattern ) )
-				.near( user.address, 20, :units => :km )
-				.map{ |res| [res.id, 
-										 res.message, 
-										 res.user_id, 
-										 res.marketplace_id] }
+			results = results.select {|r| r[1].downcase.include?(searching_item)}
 		end									 
-
-		user.update_attribute(:results,results.flatten(1).uniq)
+		
+		user.update_attribute(:results,results)
 		
 		get_next_results
 		
@@ -34,7 +35,6 @@ module Search
 		response_hash={}
 
 		results=user.results.shift(3).map do |ad| 
-			
 			text = if ad[3]
 				market_name=Marketplace.find(ad[3].to_i)
 															 .name
